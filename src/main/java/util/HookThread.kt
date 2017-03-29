@@ -11,9 +11,6 @@ import org.jnativehook.mouse.NativeMouseMotionListener
 import java.util.logging.Level
 import java.util.logging.Logger
 
-/**
- * Created by basti on 08.03.2017.
- */
 object HookThread : Thread(), NativeKeyListener, NativeMouseListener, NativeMouseMotionListener {
 
     val mouseUpEventProperty: SimpleObjectProperty<NativeMouseEvent> = SimpleObjectProperty()
@@ -46,7 +43,9 @@ object HookThread : Thread(), NativeKeyListener, NativeMouseListener, NativeMous
                 }
             })
         } catch (e: NativeHookException) {
+            println("Error starting JNativehook!")
             e.printStackTrace()
+            println("---------------------------")
         }
     }
 

@@ -1,22 +1,21 @@
 package lua
 
+import lua.swing.LibOverlay
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaNumber
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
-import org.luaj.vm2.lib.VarArgFunction
 import org.luaj.vm2.lib.jse.JsePlatform
+import util.setFunction
+import util.setProcedure
 import java.awt.GraphicsDevice
 import java.awt.GraphicsEnvironment
-import java.nio.file.Files
-import java.nio.file.Path
+import java.util.concurrent.FutureTask
 
-/**
- * Created by yenon on 2/28/17.
- */
 class LuaExecutor {
     var globals: Globals = JsePlatform.standardGlobals()
     val libIo: LibIO = LibIO()
+    val overlays = ArrayList<LibOverlay>()
 
     abstract class DeviceToLua {
         abstract fun transform(device: GraphicsDevice): LuaValue
@@ -39,37 +38,26 @@ class LuaExecutor {
     fun init() {
         globals = JsePlatform.standardGlobals()
         libIo.clear()
-        globals.set("sleep", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                Thread.sleep(v.checklong(1))
-                return LuaValue.NIL
-            }
+        globals.setProcedure("sleep", {
+            Thread.sleep(it.checklong(1))
         })
-        globals.set("time", object : VarArgFunction() {
-            override fun invoke(args: Varargs): Varargs {
-                if (args.isnumber(1)) {
-                    return LuaNumber.valueOf((System.currentTimeMillis() + args.checkint(1)).toInt())
-                } else {
-                    return LuaNumber.valueOf(System.currentTimeMillis().toInt())
+        globals.setFunction("time", {
+            return@setFunction LuaNumber.valueOf((System.currentTimeMillis() + it.optint(1, 0)).toInt())
+        })
+        globals.setFunction("wrapScreen", {
+            return@setFunction screenIdToDevice(it, object : DeviceToLua() {
+                override fun transform(device: GraphicsDevice): LuaValue {
+                    return LibScreen(device)
                 }
-            }
+            })
         })
-        globals.set("wrapScreen", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                return screenIdToDevice(v, object : DeviceToLua() {
-                    override fun transform(device: GraphicsDevice): LuaValue {
-                        return LibScreen(device)
-                    }
-                })
-            }
-        })
-        globals.set("createOverlay", object : VarArgFunction() {
-            override fun invoke(args: Varargs): Varargs {
-                return LibOverlay(args.checkint(1),
-                        args.checkint(2),
-                        args.checkint(3),
-                        args.checkint(4))
-            }
+        globals.setFunction("createOverlay", {
+            val overlay = LibOverlay(it.checkint(1),
+                    it.checkint(2),
+                    it.checkint(3),
+                    it.checkint(4))
+            overlays.add(overlay)
+            return@setFunction overlay
         })
 
         globals.set("key", KeyTable)
@@ -78,14 +66,20 @@ class LuaExecutor {
     }
 
     fun exec(script: String): LuaValue {
-        return globals.load(script).call()
-    }
-
-    fun exec(path: Path): LuaValue {
-        return globals.load(Files.newInputStream(path).reader(), path.fileName.toString()).call()
+        val task = FutureTask<LuaValue>({
+            return@FutureTask globals.load(script).call()
+        })
+        Thread(task).start()
+        return task.get()
     }
 
     fun clear() {
+        overlays.forEach({
+            it.root = null
+            it.view!!.hide()
+            it.view = null
+        })
+        overlays.clear()
         init()
     }
 

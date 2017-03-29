@@ -5,9 +5,6 @@ import lua.LuaExecutor
 import java.nio.file.Files
 import java.nio.file.Path
 
-/**
- * Created by basti on 14.03.2017.
- */
 class Script(val path: Path) {
     override fun equals(other: Any?): Boolean {
         if (other is Script) {
@@ -42,8 +39,10 @@ class Script(val path: Path) {
     }
 
     fun execute() {
-        initExecutor()
-        luaExecutor?.exec(path.resolve("script.lua"))
+        Thread({
+            initExecutor()
+            luaExecutor!!.exec(String(Files.readAllBytes(path.resolve("script.lua"))))
+        }).start()
     }
 
     fun stop() {

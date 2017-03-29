@@ -4,19 +4,20 @@ import tornadofx.*
 import util.HookThread
 import windows.WindowMain
 import java.io.File
-
-/**
- * Created by yenon on 2/28/17.
- */
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class Main : App() {
+
     companion object Main {
+        val path: Path = Paths.get(System.getProperty("user.home") + "/yenon/LuaModder")
         lateinit var launchParameters: Application.Parameters
     }
 
     override val primaryView = WindowMain::class
 
     override fun start(stage: Stage) {
+        HookThread.start()
         Main.launchParameters = parameters
         super.start(stage)
     }
@@ -25,6 +26,5 @@ class Main : App() {
 fun main(args: Array<String>) {
     System.setProperty("javafx.allowTransparentStage", "true")
     println(File(".").absolutePath)
-    HookThread.start()
     Application.launch(Main::class.java, *args)
 }

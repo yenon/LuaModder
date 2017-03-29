@@ -15,22 +15,14 @@ import util.HookThread
 import java.nio.file.Files
 import java.nio.file.Paths
 
-/**
- * Created by yenon on 2/28/17.
- */
-
-
 class WindowMain : View() {
-    companion object {
-        val path: String = System.getProperty("user.home") + "/yenon/LuaModder"
-    }
 
     val fileList: ObservableList<Script> = FXCollections.observableArrayList()
 
     private fun refreshList() {
         fileList.forEach(Script::stop)
         fileList.clear()
-        Files.list(Paths.get("$path/scripts")).forEach {
+        Files.list(Main.path.resolve("scripts")).forEach {
             if (Files.isDirectory(it)) {
                 fileList.add(Script(it))
             }
@@ -94,7 +86,7 @@ class WindowMain : View() {
                 })
             }
         }
-        Files.createDirectories(Paths.get("$path/scripts"))
+        Files.createDirectories(Main.path.resolve("scripts"))
         Platform.runLater({
             refreshList()
         })

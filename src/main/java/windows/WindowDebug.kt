@@ -3,6 +3,7 @@ package windows
 import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
+import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.event.EventHandler
 import javafx.scene.Parent
@@ -10,14 +11,14 @@ import javafx.scene.control.TabPane
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import lua.LuaExecutor
+import lua.ReverseKeyLookup
+import lua.ReverseModifierLookup
 import org.luaj.vm2.LuaError
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import tornadofx.*
+import util.HookThread
 
-/**
- * Created by yenon on 2/28/17.
- */
 class WindowDebug : View() {
 
     class LuaCommand {
@@ -29,7 +30,34 @@ class WindowDebug : View() {
 
     val debugExecutor: LuaExecutor = LuaExecutor()
     val commands: ObservableList<LuaCommand> = FXCollections.observableArrayList<LuaCommand>()!!
-    val observeableLuaInput: SimpleStringProperty = SimpleStringProperty()
+    val observableLuaInput: SimpleStringProperty = SimpleStringProperty()
+
+    init {
+        commands.addListener(ListChangeListener {
+            while (it.next()) {
+                if (it.wasAdded()) {
+                    it.addedSubList.forEach {
+                        Thread(Runnable {
+                            try {
+                                val out: LuaValue = debugExecutor.exec(it.input)
+
+                                if (out.istable()) {
+                                    it.output = resolveTable(out.checktable())
+                                } else if (out.isnil()) {
+                                    it.output = "Done!"
+                                } else {
+                                    it.output = out.toString()
+                                }
+                            } catch (error: LuaError) {
+                                it.output = error.message!!
+                                error.printStackTrace()
+                            }
+                        }).start()
+                    }
+                }
+            }
+        })
+    }
 
     override val root: Parent = tabpane {
         tab("Logging") {
@@ -39,6 +67,14 @@ class WindowDebug : View() {
         }
         tab("Lua Console") {
             vbox {
+                label {
+                    HookThread.keyDownEventProperty.addListener({ _, _, newValue ->
+                        Platform.runLater({
+                            text = "${ReverseKeyLookup[newValue.keyCode]}[${newValue.keyCode}] " +
+                                    "${ReverseModifierLookup.resolve(newValue.modifiers)}[${newValue.modifiers}]"
+                        })
+                    })
+                }
                 tableview(commands) {
                     column("Command", LuaCommand::inputProperty)
                     column("Output", LuaCommand::outputProperty)
@@ -51,7 +87,7 @@ class WindowDebug : View() {
                         }
                     }
                     promptText = "Press shift+enter to execute"
-                    textProperty().bindBidirectional(observeableLuaInput)
+                    textProperty().bindBidirectional(observableLuaInput)
                 }
             }
         }
@@ -59,26 +95,10 @@ class WindowDebug : View() {
     }
 
     private fun onLuaExecute() {
-        Thread(Runnable {
+        Thread({
             val command: LuaCommand = LuaCommand()
-            command.input = observeableLuaInput.value
-            try {
-                val out: LuaValue = debugExecutor.exec(command.input)
-
-                if (out.istable()) {
-                    command.output = resolveTable(out.checktable())
-                } else if (out.isnil()) {
-                    command.output = "Done!"
-                } else {
-                    command.output = out.toString()
-                }
-            } catch (error: LuaError) {
-                command.output = error.message!!
-                error.printStackTrace()
-            }
-            Platform.runLater(Runnable {
-                commands.add(command)
-            })
+            command.input = observableLuaInput.value
+            commands.add(command)
         }).start()
     }
 

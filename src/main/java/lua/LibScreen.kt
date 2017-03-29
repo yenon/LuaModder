@@ -2,8 +2,9 @@ package lua
 
 import net.sourceforge.tess4j.Tesseract
 import org.luaj.vm2.*
-import org.luaj.vm2.lib.VarArgFunction
 import util.scale
+import util.setFunction
+import util.setProcedure
 import java.awt.GraphicsDevice
 import java.awt.Robot
 import java.awt.image.BufferedImage
@@ -33,38 +34,29 @@ class LibScreen(device: GraphicsDevice) : LuaTable() {
         screen = robot.createScreenCapture(device.defaultConfiguration.bounds)
         this.device = device
 
-        set("poll", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                screen = robot.createScreenCapture(device.defaultConfiguration.bounds)
-                return LuaValue.NIL
-            }
+        setProcedure("poll", {
+            screen = robot.createScreenCapture(device.defaultConfiguration.bounds)
         })
 
-        set("pixelAt", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                val rgb = screen.getRGB(v.checkint(1), v.checkint(2))
+        setFunction("pixelAt", {
+            val rgb = screen.getRGB(it.checkint(1), it.checkint(2))
 
-                return LuaValue.varargsOf(arrayOf<LuaValue>(
-                        LuaNumber.valueOf(rgb and 0xFF0000 shr 16),
-                        LuaNumber.valueOf(rgb and 0x00FF00 shr 8),
-                        LuaNumber.valueOf(rgb and 0x0000FF)
-                ))
-            }
+            return@setFunction LuaValue.varargsOf(arrayOf<LuaValue>(
+                    LuaNumber.valueOf(rgb and 0xFF0000 shr 16),
+                    LuaNumber.valueOf(rgb and 0x00FF00 shr 8),
+                    LuaNumber.valueOf(rgb and 0x0000FF)
+            ))
         })
 
-        set("readString", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                tesseract.setTessVariable("tessedit_char_whitelist", "")
-                tesseract.setTessVariable("tessedit_char_blacklist", "\n")
-                return LuaString.valueOf(readString(v))
-            }
+        setFunction("readString", {
+            tesseract.setTessVariable("tessedit_char_whitelist", "")
+            tesseract.setTessVariable("tessedit_char_blacklist", "\n")
+            return@setFunction LuaString.valueOf(readString(it))
         })
 
-        set("readNumber", object : VarArgFunction() {
-            override fun invoke(v: Varargs): Varargs {
-                tesseract.setTessVariable("tessedit_char_whitelist", "0123456789.,")
-                return LuaString.valueOf(readString(v).replace(',', '.'))
-            }
+        setFunction("readNumber", {
+            tesseract.setTessVariable("tessedit_char_whitelist", "0123456789.,")
+            return@setFunction LuaString.valueOf(readString(it).replace(',', '.'))
         })
     }
 }

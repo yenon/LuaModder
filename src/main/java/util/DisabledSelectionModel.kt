@@ -4,11 +4,6 @@ import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.scene.control.MultipleSelectionModel
 
-
-/**
- * Created by basti on 14.03.2017.
- */
-
 internal class DisabledSelectionModel<T> : MultipleSelectionModel<T>() {
     init {
         super.setSelectedIndex(-1)
