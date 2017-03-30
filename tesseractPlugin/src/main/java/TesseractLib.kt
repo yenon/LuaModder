@@ -1,7 +1,7 @@
-package lua
-
 import net.sourceforge.tess4j.Tesseract
-import org.luaj.vm2.*
+import org.luaj.vm2.LuaString
+import org.luaj.vm2.LuaTable
+import org.luaj.vm2.Varargs
 import util.scale
 import util.setFunction
 import util.setProcedure
@@ -9,8 +9,7 @@ import java.awt.GraphicsDevice
 import java.awt.Robot
 import java.awt.image.BufferedImage
 
-class LibScreen(device: GraphicsDevice) : LuaTable() {
-
+class TesseractLib(device: GraphicsDevice) : LuaTable() {
     val robot: Robot = Robot(device)
     val device: GraphicsDevice
     var screen: BufferedImage
@@ -30,22 +29,11 @@ class LibScreen(device: GraphicsDevice) : LuaTable() {
     }
 
     init {
-        tesseract.setTessVariable("tessedit_char_blacklist", "\n")
         screen = robot.createScreenCapture(device.defaultConfiguration.bounds)
         this.device = device
 
         setProcedure("poll", {
             screen = robot.createScreenCapture(device.defaultConfiguration.bounds)
-        })
-
-        setFunction("pixelAt", {
-            val rgb = screen.getRGB(it.checkint(1), it.checkint(2))
-
-            return@setFunction LuaValue.varargsOf(arrayOf<LuaValue>(
-                    LuaNumber.valueOf(rgb and 0xFF0000 shr 16),
-                    LuaNumber.valueOf(rgb and 0x00FF00 shr 8),
-                    LuaNumber.valueOf(rgb and 0x0000FF)
-            ))
         })
 
         setFunction("readString", {
@@ -56,7 +44,7 @@ class LibScreen(device: GraphicsDevice) : LuaTable() {
 
         setFunction("readNumber", {
             tesseract.setTessVariable("tessedit_char_whitelist", "0123456789.,")
-            return@setFunction LuaString.valueOf(readString(it).replace(',', '.'))
+            return@setFunction LuaString.valueOf(readString(it).replace(",", "."))
         })
     }
 }

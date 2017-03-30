@@ -27,7 +27,7 @@ class TransparentView(x: Int, y: Int, width: Int, height: Int) : LuaTable() {
         panel.layout = null
         panel.background = Color(0, 0, 0, 0)
         panel.setLocation(0, 0)
-        panel.size = Dimension(width * 2, height * 2)
+        panel.size = Dimension(width, height)
 
         frame.setLocation(x, y)
         frame.size = Dimension(width, height)

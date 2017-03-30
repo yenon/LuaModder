@@ -5,17 +5,12 @@ import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaNumber
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
-import org.luaj.vm2.lib.jse.JsePlatform
 import util.setFunction
 import util.setProcedure
 import java.awt.GraphicsDevice
 import java.awt.GraphicsEnvironment
-import java.util.concurrent.FutureTask
 
-class LuaExecutor {
-    var globals: Globals = JsePlatform.standardGlobals()
-    val libIo: LibIO = LibIO()
-    val overlays = ArrayList<LibOverlay>()
+class DefaultPlugin : Plugin {
 
     abstract class DeviceToLua {
         abstract fun transform(device: GraphicsDevice): LuaValue
@@ -31,13 +26,23 @@ class LuaExecutor {
         }
     }
 
-    init {
-        init()
+    override fun clear() {
+        overlays.forEach({
+            it.root = null
+            it.view!!.hide()
+            it.view = null
+        })
+        overlays.clear()
     }
 
-    fun init() {
-        globals = JsePlatform.standardGlobals()
+    val libIo: LibIO = LibIO()
+    val overlays = ArrayList<LibOverlay>()
+
+    init {
         libIo.clear()
+    }
+
+    override fun onLoad(globals: Globals) {
         globals.setProcedure("sleep", {
             Thread.sleep(it.checklong(1))
         })
@@ -64,26 +69,4 @@ class LuaExecutor {
         globals.set("button", ButtonTable)
         globals.set("io", libIo)
     }
-
-    fun exec(script: String): LuaValue {
-        val task = FutureTask<LuaValue>({
-            return@FutureTask globals.load(script).call()
-        })
-        Thread(task).start()
-        return task.get()
-    }
-
-    fun clear() {
-        overlays.forEach({
-            it.root = null
-            it.view!!.hide()
-            it.view = null
-        })
-        overlays.clear()
-        init()
-    }
-
-    //fun serializeTable(value:LuaValue):String{
-
-    //}
 }

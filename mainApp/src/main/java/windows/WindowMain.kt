@@ -15,6 +15,7 @@ import util.HookThread
 import java.nio.file.Files
 import java.nio.file.Paths
 
+
 class WindowMain : View() {
 
     val fileList: ObservableList<Script> = FXCollections.observableArrayList()
@@ -76,6 +77,9 @@ class WindowMain : View() {
     }
 
     init {
+        Files.createDirectories(Main.path.resolve("scripts"))
+        Files.createDirectories(Main.path.resolve("plugins"))
+
         if (Main.launchParameters.named["debug"] == "true") {
             find(WindowDebug::class).openWindow()
             if (Files.isRegularFile(Paths.get("ScreenCap.jar"))) {
@@ -86,7 +90,7 @@ class WindowMain : View() {
                 })
             }
         }
-        Files.createDirectories(Main.path.resolve("scripts"))
+
         Platform.runLater({
             refreshList()
         })

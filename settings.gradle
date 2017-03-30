@@ -1,2 +1,3 @@
 rootProject.name = 'luamodder'
-
+include 'tesseractPlugin'
+include 'mainApp'
