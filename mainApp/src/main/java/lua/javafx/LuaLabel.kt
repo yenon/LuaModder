@@ -5,10 +5,12 @@ import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import util.setFXProcedure
 
-class LuaLabel : LuaControl<Label>() {
+class LuaLabel(x: Int, y: Int) : LuaControl<Label>() {
     override val e: Label = Label()
 
     init {
+        e.layoutX = x.toDouble()
+        e.layoutY = y.toDouble()
         setFXProcedure("setText", {
             e.text = it.checkjstring(1)
         })

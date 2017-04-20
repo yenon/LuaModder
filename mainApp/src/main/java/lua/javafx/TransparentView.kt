@@ -4,7 +4,7 @@ import com.sun.glass.ui.Window
 import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
-import com.sun.jna.platform.win32.WinUser.GWL_STYLE
+import com.sun.jna.platform.win32.WinUser
 import javafx.application.Platform
 import javafx.scene.Cursor
 import javafx.scene.Parent
@@ -39,23 +39,19 @@ class TransparentView : View() {
                 stage.y = y.toDouble()
                 stage.width = width.toDouble()
                 stage.height = height.toDouble()
-                stage.title = "KillMePls"
+                stage.title = "LuaModder Overlay"
                 stage.isAlwaysOnTop = true
 
                 stage.show()
 
                 Platform.runLater({
                     Window.getWindows().forEach {
-                        if (it.title == "KillMePls") {
-                            val lhwnd = it.nativeWindow
-                            val lpVoid = Pointer(lhwnd)
-                            val hwnd = HWND(lpVoid)
+                        if (it.title == "LuaModder Overlay") {
+                            val hwnd = HWND(Pointer(it.nativeWindow))
                             val user32 = User32.INSTANCE
-                            val oldStyle = user32.GetWindowLong(hwnd, GWL_STYLE)
-                            println(Integer.toBinaryString(oldStyle))
-                            val newStyle: Int = 40
-                            println(Integer.toBinaryString(newStyle))
-                            user32.SetWindowLong(hwnd, GWL_STYLE, oldStyle)
+                            val oldStyle = user32.GetWindowLong(hwnd, WinUser.GWL_EXSTYLE)
+                            val newStyle: Int = oldStyle or WinUser.WS_EX_LAYERED or WinUser.WS_EX_TRANSPARENT
+                            user32.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, newStyle)
                         }
                     }
                 })

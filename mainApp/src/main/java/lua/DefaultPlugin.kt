@@ -1,6 +1,6 @@
 package lua
 
-import lua.swing.LibOverlay
+import lua.javafx.LibOverlay
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaNumber
 import org.luaj.vm2.LuaValue
@@ -33,6 +33,7 @@ class DefaultPlugin : Plugin {
             it.view = null
         })
         overlays.clear()
+        libIo.clear()
     }
 
     val libIo: LibIO = LibIO()

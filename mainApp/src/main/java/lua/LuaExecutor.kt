@@ -7,12 +7,14 @@ import org.luaj.vm2.lib.jse.JsePlatform
 import java.net.URL
 import java.net.URLClassLoader
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.FutureTask
 import kotlin.collections.ArrayList
 
 class LuaExecutor {
     var globals: Globals = JsePlatform.standardGlobals()
     val plugins: ArrayList<Plugin> = ArrayList()
+    var task: FutureTask<LuaValue>? = null
 
     init {
         @Suppress("UNCHECKED_CAST")
@@ -43,14 +45,19 @@ class LuaExecutor {
     }
 
     fun exec(script: String): LuaValue {
-        val task = FutureTask<LuaValue>({
-            return@FutureTask globals.load(script).call()
+        task = FutureTask<LuaValue>({
+            try {
+                return@FutureTask globals.load(script).call()
+            } catch (ex: CancellationException) {
+                return@FutureTask LuaValue.NIL
+            }
         })
         Thread(task).start()
-        return task.get()
+        return task!!.get()
     }
 
     fun clear() {
+        task?.cancel(true)
         plugins.forEach(Plugin::clear)
         init()
     }

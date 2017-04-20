@@ -13,12 +13,12 @@ class LibOverlay(x: Int, y: Int, width: Int, height: Int) : LuaTable() {
 
     init {
         setFXFunction("addLabel", {
-            val label: LuaLabel = LuaLabel()
+            val label: LuaLabel = LuaLabel(it.checkint(1), it.checkint(2))
             root!!.add(label.getNode())
             return@setFXFunction label
         })
         setFXFunction("addImage", {
-            val image: LuaImage = LuaImage()
+            val image: LuaImage = LuaImage(it.checkint(1), it.checkint(2))
             root!!.add(image.getNode())
             return@setFXFunction image
         })

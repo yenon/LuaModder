@@ -14,7 +14,7 @@ import javax.swing.JPanel
 
 class TransparentView(x: Int, y: Int, width: Int, height: Int) : LuaTable() {
 
-    val frame: JFrame = JFrame("Transparent Window")
+    val frame: JFrame = JFrame("LuaModder Overlay")
     val panel: JPanel = JPanel()
 
     private fun getHWnd(w: Component): WinDef.HWND {
