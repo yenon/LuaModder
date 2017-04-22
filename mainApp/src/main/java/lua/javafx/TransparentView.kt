@@ -6,6 +6,7 @@ import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef.HWND
 import com.sun.jna.platform.win32.WinUser
 import javafx.application.Platform
+import javafx.event.EventHandler
 import javafx.scene.Cursor
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -26,7 +27,6 @@ class TransparentView : View() {
             val task: FutureTask<TransparentView> = FutureTask {
                 val stage: Stage = Stage(StageStyle.TRANSPARENT)
                 stage.initModality(Modality.NONE)
-                //val view: TransparentView = tornadofx.find(TransparentView::class)
                 val view: TransparentView = TransparentView()
                 view.setStage(stage)
                 val scene: Scene = Scene(view.root)
@@ -42,19 +42,21 @@ class TransparentView : View() {
                 stage.title = "LuaModder Overlay"
                 stage.isAlwaysOnTop = true
 
-                stage.show()
-
-                Platform.runLater({
-                    Window.getWindows().forEach {
-                        if (it.title == "LuaModder Overlay") {
-                            val hwnd = HWND(Pointer(it.nativeWindow))
-                            val user32 = User32.INSTANCE
-                            val oldStyle = user32.GetWindowLong(hwnd, WinUser.GWL_EXSTYLE)
-                            val newStyle: Int = oldStyle or WinUser.WS_EX_LAYERED or WinUser.WS_EX_TRANSPARENT
-                            user32.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, newStyle)
+                stage.onShown = EventHandler {
+                    println("Showing")
+                    Platform.runLater({
+                        Window.getWindows().forEach {
+                            if (it.title == "LuaModder Overlay") {
+                                val hwnd = HWND(Pointer(it.nativeWindow))
+                                val user32 = User32.INSTANCE
+                                val oldStyle = user32.GetWindowLong(hwnd, WinUser.GWL_EXSTYLE)
+                                val newStyle: Int = oldStyle or WinUser.WS_EX_LAYERED or WinUser.WS_EX_TRANSPARENT
+                                user32.SetWindowLong(hwnd, WinUser.GWL_EXSTYLE, newStyle)
+                            }
                         }
-                    }
-                })
+                    })
+                }
+                stage.show()
 
                 return@FutureTask view
             }

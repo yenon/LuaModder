@@ -91,9 +91,10 @@ class WindowMain : View() {
                             if (script != null) {
                                 script!!.stop()
                                 fileList.remove(script)
-                                Thread.sleep(500) //TODO Find better solution to release file used by program
+                                System.gc()
+                                Thread.sleep(500)
                                 deleteDir(script!!.path)
-                                Thread.sleep(500) //TODO ^same^
+                                System.gc()
                             } else {
                                 val alert: Alert = Alert(Alert.AlertType.ERROR)
                                 alert.title = "Error removing mod"
